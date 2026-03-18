@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>D2 Analyzer | News</title>
+    <link rel="stylesheet" href="css/index.css?v=4">
+</head>
+<body>
+<div class="particle-layer"></div>
+
+<div class="nav">
+    <div class="nav-left">
+        <div class="logo" onclick="goHome()">D2 ANALYZER</div>
+        <button class="nav-btn" onclick="goHome()">Головна</button>
+        <button class="nav-btn" onclick="goView('winrate')">Топ Winrate</button>
+    </div>
+    <div class="nav-center">
+        <button class="nav-btn" onclick="goView('tournaments')">Турніри</button>
+        <button class="nav-btn" onclick="goView('news')">Новини</button>
+    </div>
+    <div class="nav-right" id="navAuth">
+        <button class="nav-btn" onclick="goView('profile')">Профіль</button>
+        <button class="nav-btn primary" onclick="goView('login')">Login</button>
+    </div>
+</div>
+
+<div class="hero-banner news-hero-banner">
+    <div class="hero-hint">Official Dota 2 Updates • Patch Notes • Community Announcements</div>
+</div>
+
+<div class="container single">
+    <div class="card">
+        <div id="newsArticle" class="news-article">
+            <div class="muted">Loading news...</div>
+        </div>
+    </div>
+</div>
+
+<script src="js/news.js?v=1"></script>
+</body>
+</html>

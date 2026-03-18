@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>D2 Analyzer | Match</title>
+    <link rel="stylesheet" href="css/index.css?v=4">
+</head>
+<body>
+<div class="particle-layer"></div>
+<div class="nav">
+    <div class="nav-left">
+        <div class="logo" onclick="goHome()">D2 ANALYZER</div>
+        <button class="nav-btn" onclick="goHome()">Головна</button>
+        <button class="nav-btn" onclick="goView('winrate')">Топ Winrate</button>
+    </div>
+    <div class="nav-center">
+        <button class="nav-btn" onclick="goView('tournaments')">Турніри</button>
+        <button class="nav-btn" onclick="goView('news')">Новини</button>
+    </div>
+    <div class="nav-right" id="navAuth">
+        <button class="nav-btn" onclick="goView('profile')">Профіль</button>
+        <button class="nav-btn primary" onclick="goView('login')">Login</button>
+    </div>
+</div>
+
+<div class="hero-banner">
+    <div class="search-bar">
+        <input type="text" id="mId" placeholder="Match ID (e.g. 8731452604)">
+        <button class="analyze-btn" onclick="analyze()">Analyze</button>
+    </div>
+    <div class="hero-hint">Premium match analytics • Instant insights • Pro-grade stats</div>
+</div>
+
+<div class="container analyzer-active">
+    <div id="leftCol">
+        <div id="adviceBox" class="card" style="display:none; border-left: 4px solid var(--accent);"><div id="adviceContent"></div></div>
+        <div id="matchTableContent"></div>
+    </div>
+    <div id="rightCol">
+        <div class="card" id="leadersCard" style="display:none">
+            <h4>LEADERBOARDS</h4>
+            <div class="tabs" style="margin-top:10px">
+                <button class="tab active" data-tab="leaders-dmg" onclick="switchLeadersTab('leaders-dmg')">Top Damage</button>
+                <button class="tab" data-tab="leaders-sup" onclick="switchLeadersTab('leaders-sup')">Top Supports</button>
+                <button class="tab" data-tab="leaders-heal" onclick="switchLeadersTab('leaders-heal')">Top Healing</button>
+            </div>
+            <div id="leadersContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="js/match.js"></script>
+</body>
+</html>
