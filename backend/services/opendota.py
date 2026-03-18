@@ -188,3 +188,24 @@ def get_player_counts(account_id: int):
         return response.json() if response.status_code == 200 else {}
     except:
         return {}
+
+def get_teams():
+    try:
+        response = _get(f"{BASE_URL}/teams")
+        return response.json() if response.status_code == 200 else []
+    except:
+        return []
+
+def get_league_matches(league_id: int):
+    try:
+        response = _get(f"{BASE_URL}/leagues/{league_id}/matches")
+        return response.json() if response.status_code == 200 else []
+    except:
+        return []
+
+def get_league_teams(league_id: int):
+    try:
+        response = _get(f"{BASE_URL}/leagues/{league_id}/teams")
+        return response.json() if response.status_code == 200 else []
+    except:
+        return []

@@ -1,4 +1,35 @@
 ﻿    let HERO_DATA = {}, ITEM_DATA = {}, ITEM_DATA_BY_ID = {};
+    let TOURNAMENT_STATE = {
+        rows: [],
+        byId: new Map(),
+        selectedLeagueId: null
+    };
+    let TEAM_DATA_BY_ID = {};
+    const KNOWN_TOURNAMENT_RULES = [
+        { match: /the international|ti\s?\d+/i, label: 'The International' },
+        { match: /riyadh masters|esports world cup|ewc/i, label: 'Riyadh Masters / EWC' },
+        { match: /dreamleague/i, label: 'DreamLeague' },
+        { match: /esl one/i, label: 'ESL One' },
+        { match: /blast slam|blast/i, label: 'BLAST Slam' },
+        { match: /pgl wallachia|wallachia/i, label: 'PGL Wallachia' },
+        { match: /betboom dacha|bb dacha/i, label: 'BetBoom Dacha' },
+        { match: /fissure/i, label: 'FISSURE' },
+        { match: /elite league|elite league/i, label: 'Elite League' },
+        { match: /bali major|lima major|berlin major|major/i, label: 'Major' },
+        { match: /dacha/i, label: 'Dacha' }
+    ];
+    const TOURNAMENT_METADATA_OVERRIDES = [
+        { match: /the international 2024/i, prize: 2600000 },
+        { match: /riyadh masters 2024|esports world cup 2024/i, prize: 5000000 },
+        { match: /dreamleague season 26/i, prize: 1000000 },
+        { match: /dreamleague season 25/i, prize: 1000000 },
+        { match: /blast slam/i, prize: 1000000 },
+        { match: /pgl wallachia/i, prize: 1000000 },
+        { match: /betboom dacha/i, prize: 1000000 },
+        { match: /esl one bangkok 2024/i, prize: 1000000 },
+        { match: /esl one birmingham 2024/i, prize: 1000000 }
+    ];
+    const TOURNAMENT_CUTOFF_TS = new Date('2026-02-19T00:00:00Z').getTime();
     const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
 
     // Р В РІР‚вЂќР В Р’В°Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р РЋРІР‚С™Р В Р’В°Р В Р’В¶Р В Р’ВµР В Р вЂ¦Р В Р вЂ¦Р РЋР РЏ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р РЋРІР‚С™
@@ -68,8 +99,12 @@
             trending_subtitle: 'Останні 8 днів • Топ 5 за кількістю матчів',
             news_title: 'Новини Dota 2',
             news_subtitle: 'Офіційні новини Steam',
-            tournaments_title: 'Живі та нещодавні турніри',
-            tournaments_subtitle: 'На основі про-матчів',
+            tournaments_title: 'Турніри',
+            tournaments_subtitle: 'Найближчі турніри у вигляді таблиці',
+            tournaments_col_icon: 'Іконка',
+            tournaments_col_name: 'Назва',
+            tournaments_col_prize: 'Призові',
+            tournaments_col_date: 'Дата',
             items_title: 'Популярні предмети',
             items_subtitle: 'Найчастіше використовують',
             login_title: 'Увійти через Steam',
@@ -178,6 +213,20 @@
             ,failed_load_tournaments: 'Не вдалося завантажити турніри.'
             ,failed_load_top_players: 'Не вдалося завантажити топ гравців.'
             ,ad_insights: 'ІНСАЙТИ'
+            ,tournament_prize_unknown: 'Призові не вказані'
+            ,tournament_date_unknown: 'Дата невідома'
+            ,tournament_matches_count: 'Матчів'
+            ,tournament_details_title: 'Опис турніру'
+            ,tournament_bracket_title: 'Сітка турніру'
+            ,tournament_teams_title: 'Команди-учасники'
+            ,tournament_close: 'Закрити'
+            ,tournament_loading_details: 'Завантаження деталей турніру...'
+            ,tournament_no_bracket: 'Недостатньо матчів для побудови сітки.'
+            ,tournament_no_teams: 'Команди не знайдені.'
+            ,tournament_generated_description: 'Турнір {name} зараз відображається на основі доступних професійних матчів. Тут зібрані дата, призовий фонд, список команд і актуальна сітка з останніх матчів ліги.'
+            ,tournament_round_one: 'Перший раунд'
+            ,tournament_round_two: 'Півфінали'
+            ,tournament_round_three: 'Фінал'
         },
         en: {
             nav_home: 'Home',
@@ -207,8 +256,12 @@
             trending_subtitle: 'Last 8 days • Top 5 by match count',
             news_title: 'Dota 2 News',
             news_subtitle: 'Official Steam news',
-            tournaments_title: 'Live & Recent Tournaments',
-            tournaments_subtitle: 'Based on pro matches',
+            tournaments_title: 'Tournaments',
+            tournaments_subtitle: 'Upcoming tournaments in table view',
+            tournaments_col_icon: 'Icon',
+            tournaments_col_name: 'Name',
+            tournaments_col_prize: 'Prize Pool',
+            tournaments_col_date: 'Date',
             items_title: 'Popular items',
             items_subtitle: 'Most used',
             login_title: 'Login with Steam',
@@ -317,6 +370,20 @@
             ,failed_load_tournaments: 'Failed to load tournaments.'
             ,failed_load_top_players: 'Failed to load top players.'
             ,ad_insights: 'INSIGHTS'
+            ,tournament_prize_unknown: 'Prize pool not listed'
+            ,tournament_date_unknown: 'Date unknown'
+            ,tournament_matches_count: 'Matches'
+            ,tournament_details_title: 'Tournament Overview'
+            ,tournament_bracket_title: 'Tournament Bracket'
+            ,tournament_teams_title: 'Participating Teams'
+            ,tournament_close: 'Close'
+            ,tournament_loading_details: 'Loading tournament details...'
+            ,tournament_no_bracket: 'Not enough matches to build a bracket.'
+            ,tournament_no_teams: 'No teams found.'
+            ,tournament_generated_description: 'Tournament {name} is shown from available pro match data. This view combines date, prize pool, participants, and a bracket built from the latest league matches.'
+            ,tournament_round_one: 'Round One'
+            ,tournament_round_two: 'Semifinals'
+            ,tournament_round_three: 'Grand Final'
         },
         de: {
             nav_home: 'Start',
@@ -346,8 +413,12 @@
             trending_subtitle: 'Letzte 8 Tage • Top 5 nach Matchanzahl',
             news_title: 'Dota 2 News',
             news_subtitle: 'Offizielle Steam-News',
-            tournaments_title: 'Live & Aktuelle Turniere',
-            tournaments_subtitle: 'Basierend auf Pro-Matches',
+            tournaments_title: 'Turniere',
+            tournaments_subtitle: 'Kommende Turniere in Tabellenansicht',
+            tournaments_col_icon: 'Icon',
+            tournaments_col_name: 'Name',
+            tournaments_col_prize: 'Preisgeld',
+            tournaments_col_date: 'Datum',
             items_title: 'Beliebte Items',
             items_subtitle: 'Am häufigsten genutzt',
             login_title: 'Mit Steam anmelden',
@@ -456,6 +527,20 @@
             ,failed_load_tournaments: 'Turniere konnten nicht geladen werden.'
             ,failed_load_top_players: 'Top-Spieler konnten nicht geladen werden.'
             ,ad_insights: 'EINBLICKE'
+            ,tournament_prize_unknown: 'Preisgeld nicht angegeben'
+            ,tournament_date_unknown: 'Datum unbekannt'
+            ,tournament_matches_count: 'Matches'
+            ,tournament_details_title: 'Turnierbeschreibung'
+            ,tournament_bracket_title: 'Turnierbaum'
+            ,tournament_teams_title: 'Teilnehmende Teams'
+            ,tournament_close: 'Schließen'
+            ,tournament_loading_details: 'Turnierdetails werden geladen...'
+            ,tournament_no_bracket: 'Nicht genug Matches für einen Turnierbaum.'
+            ,tournament_no_teams: 'Keine Teams gefunden.'
+            ,tournament_generated_description: 'Das Turnier {name} wird aus verfügbaren Pro-Match-Daten dargestellt. Diese Ansicht kombiniert Datum, Preisgeld, Teilnehmer und einen Turnierbaum aus den neuesten Ligaspielen.'
+            ,tournament_round_one: 'Erste Runde'
+            ,tournament_round_two: 'Halbfinale'
+            ,tournament_round_three: 'Finale'
         }
     };
 
@@ -1481,36 +1566,544 @@
         }
     }
 
+    function getTournamentDateValue(item) {
+        const raw = item.startDate
+            || item.start_date
+            || item.startTimestamp
+            || item.start_timestamp
+            || item.endDate
+            || item.end_date
+            || item.endTimestamp
+            || item.end_timestamp
+            || item.last_match_time
+            || item.last;
+        if (raw == null || raw === '') return null;
+        if (typeof raw === 'number') {
+            return raw > 1e12 ? raw : raw * 1000;
+        }
+        const parsed = Date.parse(raw);
+        return Number.isNaN(parsed) ? null : parsed;
+    }
+
+    function formatTournamentDate(ts) {
+        if (!ts) return t('tournament_date_unknown');
+        return new Intl.DateTimeFormat(currentLang === 'uk' ? 'uk-UA' : currentLang === 'de' ? 'de-DE' : 'en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }).format(new Date(ts));
+    }
+
+    function formatTournamentPrize(value) {
+        const amount = Number(value);
+        if (!Number.isFinite(amount) || amount <= 0) return t('tournament_prize_unknown');
+        return new Intl.NumberFormat(currentLang === 'uk' ? 'uk-UA' : currentLang === 'de' ? 'de-DE' : 'en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+
+    function getTournamentInitials(name) {
+        const words = String(name || '')
+            .split(/\s+/)
+            .map((part) => part.replace(/[^A-Za-zА-Яа-яІіЇїЄє0-9]/g, ''))
+            .filter(Boolean);
+        return (words.slice(0, 2).map((part) => part[0]).join('') || 'D2').slice(0, 2).toUpperCase();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function normalizeTournamentImageUrl(url) {
+        if (!url) return '';
+        if (String(url).startsWith('//')) return `https:${url}`;
+        return String(url);
+    }
+
+    function handleTournamentIconError(img) {
+        if (!img || !img.parentNode) return;
+        const fallback = document.createElement('div');
+        fallback.className = 'tournament-icon-fallback';
+        fallback.innerHTML = `<span>${escapeHtml(img.dataset.initials || 'D2')}</span>`;
+        img.parentNode.replaceChild(fallback, img);
+    }
+
+    function handleTournamentTeamIconError(img) {
+        if (!img || !img.parentNode) return;
+        const fallback = document.createElement('div');
+        fallback.className = 'tournament-team-fallback';
+        fallback.innerHTML = `<span>${escapeHtml(img.dataset.initials || 'TM')}</span>`;
+        img.parentNode.replaceChild(fallback, img);
+    }
+
+    function formatTournamentTemplate(key, vars) {
+        return Object.keys(vars || {}).reduce((acc, name) => acc.replace(`{${name}}`, vars[name]), t(key));
+    }
+
+    function getTeamInfoFromMatch(match, side) {
+        if (side === 'radiant') {
+            const radiantTeam = match.radiant_team || match.radiantTeam || {};
+            const id = match.radiant_team_id || match.radiantTeamId || radiantTeam.team_id || radiantTeam.teamId || '';
+            const teamMeta = TEAM_DATA_BY_ID[id] || {};
+            return {
+                id,
+                name: match.radiant_name || match.radiant_team_name || match.radiantTeamName || radiantTeam.name || radiantTeam.tag || teamMeta.name || 'Radiant',
+                logo: normalizeTournamentImageUrl(match.radiant_logo || match.radiant_team_logo || radiantTeam.logo_url || radiantTeam.logo || teamMeta.logo_url || ''),
+                score: Number(match.radiant_score ?? match.radiantScore ?? 0)
+            };
+        }
+        const direTeam = match.dire_team || match.direTeam || {};
+        const id = match.dire_team_id || match.direTeamId || direTeam.team_id || direTeam.teamId || '';
+        const teamMeta = TEAM_DATA_BY_ID[id] || {};
+        return {
+            id,
+            name: match.dire_name || match.dire_team_name || match.direTeamName || direTeam.name || direTeam.tag || teamMeta.name || 'Dire',
+            logo: normalizeTournamentImageUrl(match.dire_logo || match.dire_team_logo || direTeam.logo_url || direTeam.logo || teamMeta.logo_url || ''),
+            score: Number(match.dire_score ?? match.direScore ?? 0)
+        };
+    }
+
+    function collectTournamentTeams(matches) {
+        const byId = new Map();
+        (matches || []).forEach((match) => {
+            [getTeamInfoFromMatch(match, 'radiant'), getTeamInfoFromMatch(match, 'dire')].forEach((team) => {
+                if (!team.name) return;
+                const key = team.id || team.name;
+                if (!byId.has(key)) {
+                    byId.set(key, { ...team, appearances: 0 });
+                }
+                byId.get(key).appearances += 1;
+            });
+        });
+        return Array.from(byId.values())
+            .sort((a, b) => b.appearances - a.appearances || a.name.localeCompare(b.name));
+    }
+
+    function mergeTournamentTeams(teams) {
+        (teams || []).forEach((team) => {
+            const teamId = team.team_id || team.teamId || team.id;
+            if (!teamId) return;
+            TEAM_DATA_BY_ID[teamId] = {
+                ...(TEAM_DATA_BY_ID[teamId] || {}),
+                ...team
+            };
+        });
+    }
+
+    function buildTeamsFromLeagueTeams(teams) {
+        return (teams || [])
+            .map((team) => ({
+                id: team.team_id || team.teamId || team.id || '',
+                name: team.name || team.tag || 'Unknown team',
+                logo: normalizeTournamentImageUrl(team.logo_url || team.logo || team.image_url || ''),
+                appearances: Number(team.matches_played || team.appearances || 0)
+            }))
+            .filter((team) => team.name)
+            .sort((a, b) => b.appearances - a.appearances || a.name.localeCompare(b.name));
+    }
+
+    function buildTournamentDescription(row) {
+        if (row.description) return row.description;
+        return formatTournamentTemplate('tournament_generated_description', {
+            name: row.name
+        });
+    }
+
+    function normalizeTournamentTier(value) {
+        const tier = String(value || '').trim().toLowerCase();
+        if (!tier) return '';
+        if (['1', 'tier 1', 't1', 'premium', 'top_tier', 'top tier', 's'].includes(tier)) return 'tier1';
+        if (['2', 'tier 2', 't2', 'professional', 'a'].includes(tier)) return 'tier2';
+        return '';
+    }
+
+    function isAllowedTournamentTier(value) {
+        const tier = normalizeTournamentTier(value);
+        return tier === 'tier1' || tier === 'tier2';
+    }
+
+    function getKnownTournamentLabel(name) {
+        const raw = String(name || '');
+        const hit = KNOWN_TOURNAMENT_RULES.find((rule) => rule.match.test(raw));
+        return hit ? hit.label : '';
+    }
+
+    function isKnownTournament(name) {
+        return Boolean(getKnownTournamentLabel(name));
+    }
+
+    function getTournamentOverride(name) {
+        const raw = String(name || '');
+        return TOURNAMENT_METADATA_OVERRIDES.find((rule) => rule.match.test(raw)) || null;
+    }
+
+    function shouldKeepTournament(item, dateValue) {
+        if (!dateValue || dateValue < TOURNAMENT_CUTOFF_TS) return false;
+        const rawName = item.name || '';
+        const tierAllowed = isAllowedTournamentTier(item.tier || item.league_tier || item.tournament_tier);
+        const known = isKnownTournament(rawName);
+        const hasMatches = Number(item.matchCount || 0) > 0 || ((item.matches || []).length > 0);
+        return (tierAllowed && hasMatches) || known;
+    }
+
+    function getTournamentDateRange(matches) {
+        const values = (matches || [])
+            .map((match) => getTournamentDateValue({ last: match.start_time }))
+            .filter(Boolean)
+            .sort((a, b) => a - b);
+        if (!values.length) return { start: null, end: null };
+        return {
+            start: values[0],
+            end: values[values.length - 1]
+        };
+    }
+
+    function formatTournamentDateRange(range) {
+        if (!range || (!range.start && !range.end)) return t('tournament_date_unknown');
+        if (range.start && range.end) {
+            if (new Date(range.start).toDateString() === new Date(range.end).toDateString()) {
+                return formatTournamentDate(range.start);
+            }
+            return `${formatTournamentDate(range.start)} - ${formatTournamentDate(range.end)}`;
+        }
+        return formatTournamentDate(range.start || range.end);
+    }
+
+    function buildTournamentRounds(matches) {
+        const ordered = [...(matches || [])]
+            .filter((match) => {
+                const radiant = getTeamInfoFromMatch(match, 'radiant');
+                const dire = getTeamInfoFromMatch(match, 'dire');
+                return (radiant.id || radiant.name) && (dire.id || dire.name) && (match.start_time || match.startTime);
+            })
+            .map((match) => ({
+                ...match,
+                start_time: match.start_time || match.startTime || 0
+            }))
+            .sort((a, b) => (a.start_time || 0) - (b.start_time || 0))
+            .slice(-7);
+        if (!ordered.length) return [];
+        const round1 = ordered.slice(0, Math.min(4, ordered.length));
+        const round2 = ordered.length > 4 ? ordered.slice(4, Math.min(6, ordered.length)) : [];
+        const round3 = ordered.length > 6 ? ordered.slice(6, 7) : [];
+        const rounds = [
+            { title: t('tournament_round_one'), matches: round1 },
+            { title: t('tournament_round_two'), matches: round2 },
+            { title: t('tournament_round_three'), matches: round3 }
+        ];
+        return rounds.filter((round) => round.matches.length);
+    }
+
+    function renderTournamentBracket(rounds) {
+        if (!rounds.length) {
+            return `<div class="bracket-empty">${t('tournament_no_bracket')}</div>`;
+        }
+        return `
+            <div class="tournament-bracket-grid">
+                ${rounds.map((round) => `
+                    <div class="bracket-round">
+                        <div class="bracket-round-title">${escapeHtml(round.title)}</div>
+                        ${round.matches.map((match, index) => {
+                            const radiant = getTeamInfoFromMatch(match, 'radiant');
+                            const dire = getTeamInfoFromMatch(match, 'dire');
+                            const radiantWin = radiant.score > dire.score;
+                            const direWin = dire.score > radiant.score;
+                            return `
+                                <div class="bracket-match">
+                                    <div class="bracket-match-head">${formatTournamentDate(getTournamentDateValue({ last: match.start_time }))} • #${index + 1}</div>
+                                    <div class="bracket-team ${radiantWin ? 'is-winner' : ''}">
+                                        <span>${escapeHtml(radiant.name)}</span>
+                                        <span class="bracket-score">${Number.isFinite(radiant.score) ? radiant.score : '-'}</span>
+                                    </div>
+                                    <div class="bracket-team ${direWin ? 'is-winner' : ''}">
+                                        <span>${escapeHtml(dire.name)}</span>
+                                        <span class="bracket-score">${Number.isFinite(dire.score) ? dire.score : '-'}</span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function closeTournamentDetails() {
+        TOURNAMENT_STATE.selectedLeagueId = null;
+        document.querySelectorAll('.tournament-row.is-active').forEach((row) => row.classList.remove('is-active'));
+        const modal = document.getElementById('tournamentModal');
+        const details = document.getElementById('tournamentDetails');
+        if (modal) modal.style.display = 'none';
+        if (!details) return;
+        details.style.display = 'none';
+        details.innerHTML = '';
+        document.body.style.overflow = '';
+    }
+
+    function handleTournamentModalBackdrop(event) {
+        if (event.target && event.target.id === 'tournamentModal') {
+            closeTournamentDetails();
+        }
+    }
+
+    async function openTournamentDetails(leagueId) {
+        const modal = document.getElementById('tournamentModal');
+        const details = document.getElementById('tournamentDetails');
+        const row = TOURNAMENT_STATE.byId.get(Number(leagueId));
+        if (!modal || !details || !row) return;
+
+        if (TOURNAMENT_STATE.selectedLeagueId === Number(leagueId)) {
+            closeTournamentDetails();
+            return;
+        }
+
+        TOURNAMENT_STATE.selectedLeagueId = Number(leagueId);
+        document.querySelectorAll('.tournament-row').forEach((node) => {
+            node.classList.toggle('is-active', Number(node.dataset.leagueId) === Number(leagueId));
+        });
+        modal.style.display = 'block';
+        details.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        details.innerHTML = `<div class="tournament-detail-card"><div class="muted">${escapeHtml(t('tournament_loading_details'))}</div></div>`;
+
+        if (!row.matchesLoaded) {
+            try {
+                const res = await fetch(`/api/tournaments/${leagueId}`);
+                const payload = await res.json();
+                if (Array.isArray(payload.matches) && payload.matches.length) {
+                    row.matches = payload.matches;
+                }
+                if (Array.isArray(payload.teams)) {
+                    row.leagueTeams = payload.teams;
+                    mergeTournamentTeams(payload.teams);
+                }
+                const fetchedRange = getTournamentDateRange(row.matches);
+                if (fetchedRange.start || fetchedRange.end) {
+                    row.dateValue = fetchedRange.start || fetchedRange.end;
+                    row.dateText = formatTournamentDateRange(fetchedRange);
+                }
+                row.matchesLoaded = true;
+            } catch (e) {
+                row.matchesLoaded = true;
+            }
+        }
+
+        const teams = collectTournamentTeams(row.matches).length
+            ? collectTournamentTeams(row.matches)
+            : buildTeamsFromLeagueTeams(row.leagueTeams);
+        const rounds = buildTournamentRounds(row.matches);
+        details.innerHTML = `
+            <div class="tournament-details-grid">
+                <div class="tournament-stack">
+                    <div class="tournament-detail-card reveal visible">
+                        <div class="tournament-detail-header">
+                            <div>
+                                <div class="tournament-detail-title">${escapeHtml(t('tournament_details_title'))}</div>
+                                <div class="tournament-detail-subtitle">${escapeHtml(row.name)} • ${escapeHtml(row.dateText)}</div>
+                            </div>
+                            <button class="tournament-close-btn" onclick="closeTournamentDetails()">${escapeHtml(t('tournament_close'))}</button>
+                        </div>
+                        <div class="tournament-description">${escapeHtml(buildTournamentDescription(row))}</div>
+                        <div class="tournament-info-pills">
+                            <span class="pill">${escapeHtml(row.prizeText)}</span>
+                            <span class="pill">${escapeHtml(row.metaText || `#${row.leagueId}`)}</span>
+                            <span class="pill">${teams.length} ${escapeHtml(t('tournament_teams_title'))}</span>
+                        </div>
+                    </div>
+                    <div class="tournament-detail-card reveal visible">
+                        <div class="section-title">
+                            <h3>${escapeHtml(t('tournament_bracket_title'))}</h3>
+                            <div class="muted">${escapeHtml(row.name)}</div>
+                        </div>
+                        ${renderTournamentBracket(rounds)}
+                    </div>
+                </div>
+                <div class="tournament-detail-card reveal visible">
+                    <div class="section-title">
+                        <h3>${escapeHtml(t('tournament_teams_title'))}</h3>
+                        <div class="muted">${teams.length} teams</div>
+                    </div>
+                    <div class="tournament-teams-list">
+                        ${teams.map((team) => {
+                            const initials = escapeHtml(getTournamentInitials(team.name));
+                            const logo = team.logo
+                                ? `<img class="tournament-team-logo" src="${escapeHtml(team.logo)}" alt="${escapeHtml(team.name)}" data-initials="${initials}" onerror="handleTournamentTeamIconError(this)">`
+                                : `<div class="tournament-team-fallback"><span>${initials}</span></div>`;
+                            return `
+                                <div class="tournament-team-chip">
+                                    ${logo}
+                                    <div>
+                                        <div class="tournament-team-name">${escapeHtml(team.name)}</div>
+                                        <div class="tournament-team-meta">${team.appearances} ${escapeHtml(t('tournament_matches_count').toLowerCase())}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('') || `<div class="bracket-empty">${escapeHtml(t('tournament_no_teams'))}</div>`}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     async function loadTournaments() {
         const list = document.getElementById('tournamentList');
         if (!list || list.dataset.loaded) return;
-        list.innerHTML = `<div class="muted">${t('loading_tournaments')}</div>`;
+        list.innerHTML = `<div class="tournament-empty">${t('loading_tournaments')}</div>`;
+        const modal = document.getElementById('tournamentModal');
+        const details = document.getElementById('tournamentDetails');
+        if (modal) modal.style.display = 'none';
+        if (details) {
+            details.style.display = 'none';
+            details.innerHTML = '';
+        }
         try {
-            const res = await fetch('https://api.opendota.com/api/proMatches');
-            const data = await res.json();
-            const recent = (data || []).slice(0, 30);
-            const grouped = {};
-            recent.forEach((m) => {
-                if (!m.leagueid) return;
-                if (!grouped[m.leagueid]) grouped[m.leagueid] = { name: m.league_name, last: m.start_time, count: 0 };
-                grouped[m.leagueid].count += 1;
-                grouped[m.leagueid].last = Math.max(grouped[m.leagueid].last, m.start_time);
+            const [proMatchesRes, leaguesRes, teamsRes] = await Promise.all([
+                fetch('https://api.opendota.com/api/proMatches'),
+                fetch('https://api.opendota.com/api/leagues'),
+                fetch('/api/teams')
+            ]);
+            const proMatches = await proMatchesRes.json();
+            const leagues = await leaguesRes.json();
+            const teams = await teamsRes.json();
+            TEAM_DATA_BY_ID = {};
+            (teams || []).forEach((team) => {
+                const teamId = team.team_id || team.teamId || team.id;
+                if (!teamId) return;
+                TEAM_DATA_BY_ID[teamId] = team;
             });
-            const rows = Object.values(grouped)
-                .sort((a, b) => b.last - a.last)
-                .slice(0, 10);
-            list.innerHTML = rows.map((t) => {
-                const date = new Date(t.last * 1000).toLocaleDateString();
+            const grouped = new Map();
+
+            (proMatches || []).slice(0, 120).forEach((match) => {
+                const leagueId = match.leagueid || match.league_id;
+                if (!leagueId) return;
+                const existing = grouped.get(leagueId) || {
+                    leagueId,
+                    name: match.league_name || `League #${leagueId}`,
+                    matchCount: 0,
+                    last_match_time: null,
+                    matches: []
+                };
+                existing.matchCount += 1;
+                existing.matches.push(match);
+                const matchTime = getTournamentDateValue({ last: match.start_time });
+                if (matchTime && (!existing.last_match_time || matchTime > existing.last_match_time)) {
+                    existing.last_match_time = matchTime;
+                }
+                grouped.set(leagueId, existing);
+            });
+
+            (leagues || []).forEach((league) => {
+                const leagueId = league.leagueid || league.league_id || league.id;
+                if (!leagueId) return;
+                const existing = grouped.get(leagueId) || {
+                    leagueId,
+                    name: league.name || `League #${leagueId}`,
+                    matchCount: 0,
+                    last_match_time: null,
+                    matches: []
+                };
+                grouped.set(leagueId, {
+                    ...existing,
+                    ...league,
+                    leagueId,
+                    name: league.name || existing.name,
+                    matchCount: existing.matchCount || 0,
+                    last_match_time: existing.last_match_time,
+                    matches: existing.matches || []
+                });
+            });
+
+            const now = Date.now();
+            const mappedRows = Array.from(grouped.values())
+                .map((item) => {
+                    const override = getTournamentOverride(item.name);
+                    const dateRange = getTournamentDateRange(item.matches || []);
+                    const dateValue = getTournamentDateValue(item) || dateRange.start || dateRange.end;
+                    const logo = normalizeTournamentImageUrl(item.banner || item.image_url || item.imageUrl || item.logo_url || item.logoUrl || '');
+                    const prizeValue = item.prize_pool || item.prizepool || item.prizePool || (override ? override.prize : 0);
+                    const normalizedTier = normalizeTournamentTier(item.tier || item.league_tier || item.tournament_tier);
+                    const metaBits = [];
+                    const seriesLabel = getKnownTournamentLabel(item.name);
+                    if (seriesLabel) metaBits.push(seriesLabel);
+                    if (normalizedTier === 'tier1') metaBits.push('TIER 1');
+                    if (normalizedTier === 'tier2') metaBits.push('TIER 2');
+                    if (item.matchCount) metaBits.push(`${item.matchCount} ${t('tournament_matches_count')}`);
+                    return {
+                        leagueId: item.leagueId,
+                        name: item.name || `League #${item.leagueId}`,
+                        logo,
+                        description: item.description || item.desc || '',
+                        tier: normalizedTier,
+                        prizeText: formatTournamentPrize(prizeValue),
+                        dateValue,
+                        dateText: formatTournamentDateRange(dateRange.start || dateRange.end ? dateRange : { start: dateValue, end: dateValue }),
+                        metaText: metaBits.join(' • '),
+                        matches: item.matches || []
+                    };
+                })
+                .filter((item) => item.name);
+
+            let rows = mappedRows
+                .filter((item) => {
+                    const original = grouped.get(item.leagueId) || {};
+                    return shouldKeepTournament(original, item.dateValue);
+                })
+                .sort((a, b) => {
+                    const aDate = a.dateValue;
+                    const bDate = b.dateValue;
+                    if (aDate && bDate) {
+                        const aFuture = aDate >= now;
+                        const bFuture = bDate >= now;
+                        if (aFuture && bFuture) return aDate - bDate;
+                        if (aFuture !== bFuture) return aFuture ? -1 : 1;
+                        return bDate - aDate;
+                    }
+                    if (aDate || bDate) return aDate ? -1 : 1;
+                    return a.name.localeCompare(b.name);
+                })
+                .slice(0, 16);
+
+            if (!rows.length) {
+                rows = mappedRows
+                    .filter((item) => item.dateValue && item.dateValue >= TOURNAMENT_CUTOFF_TS)
+                    .sort((a, b) => (a.dateValue || 0) - (b.dateValue || 0))
+                    .slice(0, 16);
+            }
+
+            list.innerHTML = rows.map((row) => {
+                const initials = escapeHtml(getTournamentInitials(row.name));
+                const iconHtml = row.logo
+                    ? `<img class="tournament-icon" src="${escapeHtml(row.logo)}" alt="${escapeHtml(row.name)}" data-initials="${initials}" onerror="handleTournamentIconError(this)">`
+                    : `<div class="tournament-icon-fallback"><span>${initials}</span></div>`;
                 return `
-                    <div class="tournament-item">
-                        <div class="news-title">${t.name}</div>
-                        <div class="news-meta">${t('recent_matches_label')}: ${t.count} вЂў ${t('last_match_label')}: ${date}</div>
+                    <div class="tournament-row reveal visible" data-league-id="${row.leagueId}" onclick="openTournamentDetails(${row.leagueId})" style="cursor:pointer">
+                        <div class="tournament-icon-cell">${iconHtml}</div>
+                        <div class="tournament-name-cell">
+                            <div class="tournament-name">${escapeHtml(row.name)}</div>
+                            <div class="tournament-meta">${escapeHtml(row.metaText || `#${row.leagueId}`)}</div>
+                        </div>
+                        <div class="tournament-prize-cell">
+                            <div class="tournament-prize">${escapeHtml(row.prizeText)}</div>
+                        </div>
+                        <div class="tournament-date-cell">
+                            <div class="tournament-date">${escapeHtml(row.dateText)}</div>
+                        </div>
                     </div>
                 `;
-            }).join('') || `<div class="muted">${t('no_tournaments')}</div>`;
+            }).join('') || `<div class="tournament-empty">${t('no_tournaments')}</div>`;
+            TOURNAMENT_STATE.rows = rows;
+            TOURNAMENT_STATE.byId = new Map(rows.map((row) => [Number(row.leagueId), row]));
+            TOURNAMENT_STATE.selectedLeagueId = null;
             list.dataset.loaded = '1';
         } catch (e) {
-            list.innerHTML = `<div class="muted">${t('failed_load_tournaments')}</div>`;
+            list.innerHTML = `<div class="tournament-empty">${t('failed_load_tournaments')}</div>`;
         }
     }
 
@@ -1526,6 +2119,11 @@
         document.addEventListener('click', () => {
             closeUserMenu();
             closeLangMenu();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && TOURNAMENT_STATE.selectedLeagueId != null) {
+                closeTournamentDetails();
+            }
         });
         const params = new URLSearchParams(window.location.search);
         const view = params.get('view');
