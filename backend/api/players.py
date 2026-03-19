@@ -297,6 +297,28 @@ def profile(account_id: int, tz_offset: int = 0):
                 role_key = "jungle"
             if role_key:
                 role_counts[role_key] = role_counts.get(role_key, 0) + 1
+    # Fallback: use aggregated counts if available
+    if not role_counts:
+        lane_counts = (counts or {}).get("lane_role") or {}
+        for key, data in lane_counts.items():
+            games = data.get("games") or data.get("game") or data.get("n") or 0
+            if not games:
+                continue
+            if str(key) == "1":
+                role_counts["safe"] = role_counts.get("safe", 0) + games
+            elif str(key) == "2":
+                role_counts["mid"] = role_counts.get("mid", 0) + games
+            elif str(key) == "3":
+                role_counts["offlane"] = role_counts.get("offlane", 0) + games
+            elif str(key) == "4":
+                role_counts["jungle"] = role_counts.get("jungle", 0) + games
+        roam_counts = (counts or {}).get("is_roaming") or {}
+        for key, data in roam_counts.items():
+            if str(key) != "1":
+                continue
+            games = data.get("games") or data.get("game") or data.get("n") or 0
+            if games:
+                role_counts["roam"] = role_counts.get("roam", 0) + games
             checked += 1
             if checked >= 12:
                 break
