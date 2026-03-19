@@ -264,6 +264,42 @@ def profile(account_id: int, tz_offset: int = 0):
             role_key = "jungle"
         if role_key:
             role_counts[role_key] = role_counts.get(role_key, 0) + 1
+    # Fallback: fetch match details to get lane_role/is_roaming if missing
+    if not role_counts:
+        checked = 0
+        for m in matches[:20]:
+            match_id = m.get("match_id") or m.get("matchId")
+            if not match_id:
+                continue
+            details = get_match(match_id) or {}
+            players = details.get("players") if isinstance(details, dict) else None
+            if not isinstance(players, list):
+                continue
+            me = None
+            for p in players:
+                if p.get("account_id") == account_id:
+                    me = p
+                    break
+            if not me:
+                continue
+            lane_role = me.get("lane_role")
+            is_roaming = me.get("is_roaming")
+            role_key = None
+            if is_roaming in (1, True):
+                role_key = "roam"
+            elif lane_role == 1:
+                role_key = "safe"
+            elif lane_role == 2:
+                role_key = "mid"
+            elif lane_role == 3:
+                role_key = "offlane"
+            elif lane_role == 4:
+                role_key = "jungle"
+            if role_key:
+                role_counts[role_key] = role_counts.get(role_key, 0) + 1
+            checked += 1
+            if checked >= 12:
+                break
     total_roles = sum(role_counts.values())
     role_rows = []
     for key, count in role_counts.items():
