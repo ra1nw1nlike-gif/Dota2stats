@@ -179,8 +179,10 @@ def profile(account_id: int, tz_offset: int = 0):
     counts = get_player_counts(account_id) or {}
 
     # Top items (from recent matches)
+    # Fallback to the basic matches list if extended data is missing.
+    source_matches = matches_raw if matches_raw else matches
     item_counts = {}
-    for m in matches_raw:
+    for m in source_matches:
         for key in ("item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral"):
             item_id = m.get(key)
             if not item_id or item_id == 0:

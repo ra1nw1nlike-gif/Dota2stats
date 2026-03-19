@@ -1263,6 +1263,31 @@
             font-size: 20px;
             font-weight: 700;
         }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .profile-right {
+            display: grid;
+            gap: 10px;
+            justify-items: end;
+        }
+        .profile-items {
+            display: grid;
+            gap: 6px;
+            align-items: start;
+            min-width: 260px;
+        }
+        .profile-items-title {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 12px;
+            color: #e2e6ea;
+        }
         .profile-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1344,6 +1369,7 @@
             background: linear-gradient(90deg, rgba(255,75,75,0.7), rgba(127,211,255,0.7));
         }
         .item-grid { display: grid; gap: 10px; }
+        .item-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .item-chip {
             display: grid;
             grid-template-columns: 44px 1fr;
@@ -1354,6 +1380,19 @@
             border: 1px solid rgba(255,255,255,0.06);
             background: rgba(12,14,16,0.7);
             box-shadow: var(--glow-soft);
+        }
+        .item-grid.compact .item-chip {
+            grid-template-columns: 32px 1fr;
+            padding: 6px;
+            gap: 8px;
+            border-radius: 10px;
+        }
+        .item-grid.compact .item-name { font-size: 11px; }
+        .item-grid.compact .item-meta { font-size: 10px; }
+        .item-grid.compact img,
+        .item-grid.compact .item-placeholder {
+            width: 32px;
+            height: 24px;
         }
         .item-chip img {
             width: 44px;
@@ -1436,6 +1475,11 @@
             .nav-btn { font-size: 11px; padding: 6px 10px; }
             .card { padding: 16px; border-radius: 16px; }
             .section-block { padding: 12px; }
+            .profile-header { flex-direction: column; align-items: flex-start; }
+            .profile-right { width: 100%; justify-items: start; }
+            .profile-items { width: 100%; min-width: 0; }
+            .profile-items-title { flex-direction: column; align-items: flex-start; gap: 2px; }
+            .item-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .winrate-grid { grid-template-columns: 1fr; }
             .role-grid { grid-template-columns: 1fr; }
             .hero-card-header { flex-direction: column; align-items: flex-start; }
@@ -1499,6 +1543,7 @@
             .pill { font-size: 9px; padding: 3px 6px; }
             .hero-expand { font-size: 10px; padding: 4px 6px; }
             .hero-trend { padding: 6px; }
+            .item-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         .news-article {
