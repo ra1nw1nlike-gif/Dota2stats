@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from services.opendota import (
     get_hero_stats_last_days,
     get_hero_role_rows_last_days,
+    get_hero_daily_rows_last_days,
     get_teams,
     get_league_matches,
     get_league_teams,
@@ -17,6 +18,11 @@ def meta_heroes(days: int = 8):
 @router.get("/meta/roles")
 def meta_roles(days: int = 8):
     rows = get_hero_role_rows_last_days(days)
+    return {"days": days, "rows": rows}
+
+@router.get("/meta/hero-trends")
+def meta_hero_trends(days: int = 8):
+    rows = get_hero_daily_rows_last_days(days)
     return {"days": days, "rows": rows}
 
 @router.get("/teams")

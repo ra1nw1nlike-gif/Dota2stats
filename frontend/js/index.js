@@ -115,6 +115,8 @@
             activity_title: 'Активність',
             activity_subtitle: 'Останні 3 місяці',
             trend_title: 'Тренд перемог/поразок',
+            daily_winrate_label: 'Щоденний вінрейт',
+            no_trend_data: 'Немає тренду',
             stats_title: 'Повна статистика',
             stats_subtitle: 'За весь час',
             top_heroes_title: 'Топ 5 героїв',
@@ -272,6 +274,8 @@
             activity_title: 'Activity',
             activity_subtitle: 'Last 3 months',
             trend_title: 'Win/Loss Trend',
+            daily_winrate_label: 'Daily win rate',
+            no_trend_data: 'No trend data',
             stats_title: 'Full stats',
             stats_subtitle: 'All time',
             top_heroes_title: 'Top 5 Heroes',
@@ -429,6 +433,8 @@
             activity_title: 'Aktivität',
             activity_subtitle: 'Letzte 3 Monate',
             trend_title: 'Win/Loss Trend',
+            daily_winrate_label: 'Tägliche Winrate',
+            no_trend_data: 'Keine Trenddaten',
             stats_title: 'Gesamtstatistik',
             stats_subtitle: 'Gesamte Zeit',
             top_heroes_title: 'Top 5 Helden',
@@ -1180,13 +1186,15 @@
         roleGrid.innerHTML = `<div class="muted">${t('loading_heroes')}</div>`;
         try {
             await ensureConstants();
-            const [metaRes, roleRes, patchRes] = await Promise.all([
+            const [metaRes, roleRes, patchRes, trendRes] = await Promise.all([
                 fetch('/api/meta/heroes?days=8'),
                 fetch('/api/meta/roles?days=8'),
-                fetch('https://api.opendota.com/api/constants/patch')
+                fetch('https://api.opendota.com/api/constants/patch'),
+                fetch('/api/meta/hero-trends?days=8')
             ]);
             let heroStats = [];
             let roleTop = null;
+            let trendMap = null;
             if (roleRes.ok) {
                 const roleData = await roleRes.json();
                 const rows = (roleData && roleData.rows) ? roleData.rows : [];
@@ -1214,6 +1222,12 @@
                 const fallback = await fallbackRes.json();
                 heroStats = fallback || [];
             }
+            if (trendRes.ok) {
+                const trendData = await trendRes.json();
+                const rows = (trendData && trendData.rows) ? trendData.rows : [];
+                const days = trendData && trendData.days ? trendData.days : 8;
+                trendMap = buildHeroTrendMap(rows, days);
+            }
             if (!roleTop) {
                 roleTop = buildRoleTopFromStats(heroStats, 50);
             }
@@ -1227,7 +1241,7 @@
 
             window.__HERO_STATS__ = heroStats;
             renderRoleColumns(heroStats, roleTop);
-            renderMetaTop5(heroStats);
+            renderMetaTop5(heroStats, trendMap);
             roleGrid.dataset.loaded = '1';
         } catch (e) {
             roleGrid.innerHTML = `<div class="muted">${t('failed_load_heroes')}</div>`;
@@ -1336,7 +1350,7 @@
         roleGrid.innerHTML = html;
     }
 
-    function renderMetaTop5(stats) {
+    function renderMetaTop5(stats, trendMap) {
         const minMatches = 100;
         const minWinrate = 50;
         const meta = (stats || [])
@@ -1346,10 +1360,10 @@
             .slice(0, 5);
         const target = document.getElementById('metaTop5');
         if (!target) return;
-        target.innerHTML = meta.map((hero) => renderHeroCard(hero, 'meta')).join('') || '<div class="muted">No meta data.</div>';
+        target.innerHTML = meta.map((hero) => renderHeroCard(hero, 'meta', trendMap)).join('') || '<div class="muted">No meta data.</div>';
     }
 
-    function renderHeroCard(hero, contextId) {
+    function renderHeroCard(hero, contextId, trendMap) {
         const ctx = contextId || 'default';
         const winrate = hero.pro_pick ? ((hero.pro_win / hero.pro_pick) * 100).toFixed(1) : '0.0';
         const roles = (hero.roles || []).slice(0, 3).map((r) => `<span class="pill">${r}</span>`).join('');
@@ -1357,6 +1371,10 @@
         const talents = heroConst && heroConst.talents
             ? heroConst.talents.slice(0, 4).map((t) => `<span class="pill">${t.name || t}</span>`).join('')
             : '';
+        const trendValues = trendMap && hero.id ? trendMap[hero.id] : null;
+        const trendHtml = trendValues && trendValues.length
+            ? renderHeroTrend(trendValues, ctx, hero.id)
+            : `<div class="hero-trend empty">${t('no_trend_data')}</div>`;
         return `
             <div class="hero-card" data-hero-id="${hero.id}" data-context="${ctx}">
                 <div class="hero-card-header">
@@ -1370,6 +1388,7 @@
                     <div class="hero-winrate">${winrate}%</div>
                 </div>
                 <div class="pill-row">${roles || `<span class="pill">${t('no_roles')}</span>`}</div>
+                ${trendHtml}
                 <button class="hero-expand" onclick="toggleHeroExtra(${hero.id}, '${ctx}')">${t('meta_build')}</button>
                 <div class="hero-extra" id="hero-extra-${ctx}-${hero.id}">
                     <div class="muted" style="margin-bottom:6px">${t('popular_items')}</div>
@@ -1377,6 +1396,82 @@
                     <div class="muted" style="margin:8px 0 6px">${t('talents')}</div>
                     <div class="pill-row">${talents || `<span class="pill">${t('no_talent_data')}</span>`}</div>
                 </div>
+            </div>
+        `;
+    }
+
+    function buildHeroTrendMap(rows, days) {
+        if (!Array.isArray(rows) || !rows.length) return {};
+        const byHeroDay = {};
+        let maxDay = null;
+        for (const r of rows) {
+            const heroId = r.hero_id;
+            if (!heroId) continue;
+            const d = new Date(r.day);
+            if (Number.isNaN(d.getTime())) continue;
+            if (!maxDay || d > maxDay) maxDay = d;
+            const dayKey = d.toISOString().slice(0, 10);
+            if (!byHeroDay[heroId]) byHeroDay[heroId] = {};
+            byHeroDay[heroId][dayKey] = {
+                wins: Number(r.wins || 0),
+                matches: Number(r.matches || 0)
+            };
+        }
+        const end = maxDay || new Date();
+        end.setUTCHours(0, 0, 0, 0);
+        const dayKeys = [];
+        const totalDays = Math.max(2, Number(days || 8));
+        for (let i = totalDays - 1; i >= 0; i -= 1) {
+            const d = new Date(end);
+            d.setUTCDate(end.getUTCDate() - i);
+            dayKeys.push(d.toISOString().slice(0, 10));
+        }
+        const result = {};
+        Object.keys(byHeroDay).forEach((heroId) => {
+            let last = null;
+            result[heroId] = dayKeys.map((key) => {
+                const entry = byHeroDay[heroId][key];
+                if (entry && entry.matches > 0) {
+                    last = (entry.wins / entry.matches) * 100;
+                    return last;
+                }
+                if (last !== null) return last;
+                return 50;
+            });
+        });
+        return result;
+    }
+
+    function renderHeroTrend(values, contextId, heroId) {
+        const width = 200;
+        const height = 60;
+        const pad = 6;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = (max - min) || 1;
+        const points = values.map((v, i) => {
+            const x = (i / (values.length - 1)) * (width - pad * 2) + pad;
+            const y = height - pad - ((v - min) / range) * (height - pad * 2);
+            return { x, y };
+        });
+        const polyline = points.map((p) => `${p.x},${p.y}`).join(' ');
+        const safeId = `${contextId}-${heroId}`.replace(/[^a-z0-9]+/gi, '');
+        const gradId = `heroTrendGrad${safeId}`;
+        const dots = points.map((p) => `<circle class="hero-trend-point" cx="${p.x}" cy="${p.y}" r="2.4"></circle>`).join('');
+        return `
+            <div class="hero-trend">
+                <div class="hero-trend-label">${t('daily_winrate_label')}</div>
+                <svg class="hero-trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#7fd3ff"/>
+                            <stop offset="50%" stop-color="#52e566"/>
+                            <stop offset="100%" stop-color="#ffb84d"/>
+                        </linearGradient>
+                    </defs>
+                    <polyline points="${polyline}" class="hero-trend-line" style="stroke: url(#${gradId});" />
+                    ${dots}
+                </svg>
             </div>
         `;
     }

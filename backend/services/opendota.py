@@ -154,6 +154,32 @@ def get_hero_role_rows_last_days(days: int = 8):
     except:
         return []
 
+def get_hero_daily_rows_last_days(days: int = 8):
+    try:
+        seconds = max(1, days) * 86400
+        sql = f"""
+            SELECT
+                p.hero_id,
+                DATE_TRUNC('day', TO_TIMESTAMP(m.start_time)) AS day,
+                COUNT(*) AS matches,
+                SUM(CASE
+                    WHEN (m.radiant_win = true AND p.player_slot < 128)
+                      OR (m.radiant_win = false AND p.player_slot >= 128)
+                    THEN 1 ELSE 0 END) AS wins
+            FROM matches m
+            JOIN player_matches p ON p.match_id = m.match_id
+            WHERE m.start_time > (EXTRACT(EPOCH FROM NOW()) - {seconds})
+            GROUP BY p.hero_id, day
+            ORDER BY day ASC
+        """
+        response = _get(f"{BASE_URL}/explorer", params={"sql": sql}, timeout=20)
+        if response.status_code != 200:
+            return []
+        data = response.json() or {}
+        return data.get("rows", [])
+    except:
+        return []
+
 def get_player(account_id: int):
     try:
         response = _get(f"{BASE_URL}/players/{account_id}")

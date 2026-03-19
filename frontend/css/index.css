@@ -747,6 +747,33 @@
             letter-spacing: 0.6px;
             box-shadow: 0 0 10px rgba(127,211,255,0.2);
         }
+        .hero-trend {
+            background: linear-gradient(180deg, rgba(16,18,20,0.9), rgba(11,13,15,0.9));
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 6px 8px;
+            display: grid;
+            gap: 4px;
+        }
+        .hero-trend.empty {
+            color: #9aa0a6;
+            font-size: 11px;
+            text-align: center;
+            padding: 10px 8px;
+        }
+        .hero-trend-label { font-size: 10px; color: #9aa0a6; }
+        .hero-trend-svg { width: 100%; height: 60px; }
+        .hero-trend-line {
+            fill: none;
+            stroke-width: 2.4;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 6px rgba(127,211,255,0.35));
+        }
+        .hero-trend-point {
+            fill: #101316;
+            stroke: rgba(255,255,255,0.7);
+            stroke-width: 1.1;
+        }
         .hero-expand { background: #1f2326; color: #d7d7d7; border: 1px solid #2c3136; padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; }
         .hero-extra { display: none; border-top: 1px solid #222; padding-top: 8px; }
         .hero-extra.active { display: block; }

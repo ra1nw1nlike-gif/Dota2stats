@@ -51,6 +51,16 @@ async def read_news():
     path = os.path.join(FRONTEND_DIR, "news.html")
     return FileResponse(path)
 
+@app.get("/favicon.svg")
+async def favicon_svg():
+    path = os.path.join(FRONTEND_DIR, "favicon.svg")
+    return FileResponse(path, media_type="image/svg+xml")
+
+@app.get("/favicon.ico")
+async def favicon_ico():
+    path = os.path.join(FRONTEND_DIR, "favicon.svg")
+    return FileResponse(path, media_type="image/svg+xml")
+
 # Робимо так, щоб API розуміло довгі ID
 @app.middleware("http")
 async def fix_ids(request, call_next):
