@@ -244,6 +244,33 @@ def profile(account_id: int, tz_offset: int = 0):
         })
 
     prof = profile.get("profile", {}) if isinstance(profile, dict) else {}
+
+    # Role/lane distribution from recent matches
+    role_source = matches_raw if matches_raw else matches
+    role_counts = {}
+    for m in role_source:
+        lane_role = m.get("lane_role")
+        is_roaming = m.get("is_roaming")
+        role_key = None
+        if is_roaming in (1, True):
+            role_key = "roam"
+        elif lane_role == 1:
+            role_key = "safe"
+        elif lane_role == 2:
+            role_key = "mid"
+        elif lane_role == 3:
+            role_key = "offlane"
+        elif lane_role == 4:
+            role_key = "jungle"
+        if role_key:
+            role_counts[role_key] = role_counts.get(role_key, 0) + 1
+    total_roles = sum(role_counts.values())
+    role_rows = []
+    for key, count in role_counts.items():
+        pct = round((count / total_roles) * 100, 1) if total_roles else 0
+        role_rows.append({"role": key, "count": count, "percent": pct})
+    role_rows.sort(key=lambda r: r["count"], reverse=True)
+
     return {
         "profile": {
             "account_id": account_id,
@@ -257,6 +284,10 @@ def profile(account_id: int, tz_offset: int = 0):
         "trend": trend,
         "wl": wl,
         "counts": counts,
+        "role_stats": {
+            "total": total_roles,
+            "rows": role_rows
+        },
         "activity": _build_activity(matches_raw, 84, tz_offset),
     }
 

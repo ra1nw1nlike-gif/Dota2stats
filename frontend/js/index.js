@@ -107,6 +107,13 @@
             tournaments_col_date: 'Дата',
             items_title: 'Популярні предмети',
             items_subtitle: 'Найчастіше використовують',
+            roles_title: 'Ролі та лінії',
+            role_safe: 'Безпечна',
+            role_mid: 'Центральна',
+            role_offlane: 'Складна',
+            role_jungle: 'Ліс',
+            role_roam: 'Роум',
+            role_unknown: 'Невідомо',
             login_title: 'Увійти через Steam',
             login_subtitle: 'Безпечний OpenID',
             login_body: 'Натисни, щоб розпочати Steam-автентифікацію. Після входу ти повернешся назад.',
@@ -266,6 +273,13 @@
             tournaments_col_date: 'Date',
             items_title: 'Popular items',
             items_subtitle: 'Most used',
+            roles_title: 'Roles & Lanes',
+            role_safe: 'Safe Lane',
+            role_mid: 'Mid Lane',
+            role_offlane: 'Offlane',
+            role_jungle: 'Jungle',
+            role_roam: 'Roaming',
+            role_unknown: 'Unknown',
             login_title: 'Login with Steam',
             login_subtitle: 'Secure OpenID',
             login_body: 'Click to start Steam authentication. After login, you will be redirected back.',
@@ -425,6 +439,13 @@
             tournaments_col_date: 'Datum',
             items_title: 'Beliebte Items',
             items_subtitle: 'Am häufigsten genutzt',
+            roles_title: 'Rollen & Lanes',
+            role_safe: 'Safe Lane',
+            role_mid: 'Mid Lane',
+            role_offlane: 'Offlane',
+            role_jungle: 'Jungle',
+            role_roam: 'Roaming',
+            role_unknown: 'Unbekannt',
             login_title: 'Mit Steam anmelden',
             login_subtitle: 'Sicheres OpenID',
             login_body: 'Klicke zum Start der Steam-Authentifizierung. Danach wirst du zurückgeleitet.',
@@ -2325,6 +2346,7 @@
         const matchesEl = document.getElementById('profileRecentMatches');
         const activityEl = document.getElementById('activityGrid');
         const itemsEl = document.getElementById('profileTopItems');
+        const rolesEl = document.getElementById('profileRoles');
         const trendEl = document.getElementById('profileTrend');
         if (nameEl) nameEl.textContent = t('profile_loading');
         try {
@@ -2341,6 +2363,7 @@
             renderProfileMatches(matchesEl, data.recent_matches || []);
             renderActivity(activityEl, data.activity || null);
             renderProfileItems(itemsEl, data.top_items || []);
+            renderProfileRoles(rolesEl, data.role_stats || null);
             renderProfileTrend(trendEl, data.trend || []);
             refreshReveal();
         } catch (e) {
@@ -2478,6 +2501,38 @@
                     <div>
                         <div class="item-name">${name}</div>
                         <div class="item-meta">${it.count} ${t('games_label')}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderProfileRoles(el, roleStats) {
+        if (!el) return;
+        const rows = roleStats && Array.isArray(roleStats.rows) ? roleStats.rows : [];
+        if (!rows.length) {
+            el.innerHTML = `<div class="muted">${t('no_data_label')}</div>`;
+            return;
+        }
+        const labelMap = {
+            safe: t('role_safe'),
+            mid: t('role_mid'),
+            offlane: t('role_offlane'),
+            jungle: t('role_jungle'),
+            roam: t('role_roam'),
+            unknown: t('role_unknown'),
+        };
+        el.innerHTML = rows.map((r) => {
+            const label = labelMap[r.role] || r.role || t('role_unknown');
+            const pct = typeof r.percent === 'number' ? r.percent : 0;
+            return `
+                <div class="role-row">
+                    <div class="role-row-head">
+                        <span class="role-row-label">${label}</span>
+                        <span class="role-row-pct">${pct}%</span>
+                    </div>
+                    <div class="role-row-bar">
+                        <span style="width:${Math.min(100, Math.max(0, pct))}%"></span>
                     </div>
                 </div>
             `;
