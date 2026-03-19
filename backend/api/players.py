@@ -188,6 +188,33 @@ def profile(account_id: int, tz_offset: int = 0):
             if not item_id or item_id == 0:
                 continue
             item_counts[item_id] = item_counts.get(item_id, 0) + 1
+
+    # If items are still missing, fallback to full match details for a small set.
+    if not item_counts:
+        checked = 0
+        for m in matches[:20]:
+            match_id = m.get("match_id") or m.get("matchId")
+            if not match_id:
+                continue
+            details = get_match(match_id) or {}
+            players = details.get("players") if isinstance(details, dict) else None
+            if not isinstance(players, list):
+                continue
+            me = None
+            for p in players:
+                if p.get("account_id") == account_id:
+                    me = p
+                    break
+            if not me:
+                continue
+            for key in ("item_0", "item_1", "item_2", "item_3", "item_4", "item_5", "item_neutral"):
+                item_id = me.get(key)
+                if not item_id or item_id == 0:
+                    continue
+                item_counts[item_id] = item_counts.get(item_id, 0) + 1
+            checked += 1
+            if checked >= 12:
+                break
     top_items = [
         {"item_id": k, "count": v}
         for k, v in sorted(item_counts.items(), key=lambda x: x[1], reverse=True)[:10]
