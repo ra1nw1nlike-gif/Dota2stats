@@ -2468,7 +2468,7 @@
             el.innerHTML = `<div class="muted">${t('no_data_label')}</div>`;
             return;
         }
-        el.innerHTML = items.map((it) => {
+        el.innerHTML = items.slice(0, 10).map((it) => {
             const itemConst = ITEM_DATA_BY_ID[it.item_id];
             const name = itemConst ? itemConst.dname : `Item ${it.item_id}`;
             const img = itemConst && itemConst.img ? `https://cdn.cloudflare.steamstatic.com${itemConst.img}` : '';
@@ -2477,7 +2477,7 @@
                     ${img ? `<img src="${img}" alt="">` : `<div class="item-placeholder"></div>`}
                     <div>
                         <div class="item-name">${name}</div>
-                        <div class="item-meta">${it.count} games</div>
+                        <div class="item-meta">${it.count} ${t('games_label')}</div>
                     </div>
                 </div>
             `;
