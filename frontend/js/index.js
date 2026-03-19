@@ -2545,7 +2545,7 @@
             el.innerHTML = `<div class="muted">${t('no_data_label')}</div>`;
             return;
         }
-        const width = 520;
+        const width = Math.max(240, Math.min(640, el.clientWidth || 520));
         const height = 140;
         const min = Math.min(...trend);
         const max = Math.max(...trend);
